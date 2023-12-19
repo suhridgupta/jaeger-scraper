@@ -1,0 +1,24 @@
+{
+  "name": "jaeger-scraper",
+  "version": "1.0.0",
+  "description": "Application for scraping API latency from Jaeger and exposing it as a prometheus metric",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: No test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/suhridgupta/jaeger-scraper.git"
+  },
+  "author": "Suhrid Gupta",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/suhridgupta/jaeger-scraper/issues"
+  },
+  "homepage": "https://github.com/suhridgupta/jaeger-scraper#readme",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "express": "^4.18.2",
+    "prom-client": "^15.0.0"
+  }
+}

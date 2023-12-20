@@ -12,10 +12,10 @@ const counter = new Gauge({
 });
 
 app.get('/metrics', async (req, res) => {
+	let scrape_window = (process.env.SCRAPE_WINDOW || 60) * 1000 * 1000 // microseconds
 	let url = process.env.JAEGER_URL || "http://172.26.128.130:31111";
-	// let url = "http://172.26.128.130:31111";
-	let end = Date.now() * 1000;
-	let start = end - ( 60 * 1000000 );
+	let end = Date.now() * 1000; // microseconds
+	let start = end - ( scrape_window );
 	let operation = "/wrk2-api/post/compose";
 	let service = "nginx-web-server";
 	try {
@@ -26,7 +26,6 @@ app.get('/metrics', async (req, res) => {
 		data.forEach(api => {
 			let duration = api.spans.find(span => span.references.length == 0).duration || 0;
 			avg_duration += duration / 1000;
-			//counter.inc({ id: api.traceID }, duration);
 		});
 		avg_duration = (avg_duration / data.length) || 0;
 		counter.set(avg_duration);
@@ -35,12 +34,10 @@ app.get('/metrics', async (req, res) => {
 	catch(error) {
 		console.log("Jaeger-Tracing Error: " + error);
 	}
-	finally{
+	finally {
 		res.set('Content-Type', register.contentType);
 		res.end(await register.getSingleMetricAsString('wrk2_api_latency_per_minute'));
-	};
-	//res.set('Content-Type', register.contentType);
-	//res.end(await register.getSingleMetricAsString('wrk2_api_latency_per_minute'));
+	}
 });
 
 app.listen(PORT, HOST, ()=> {

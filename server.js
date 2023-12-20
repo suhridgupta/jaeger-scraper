@@ -6,9 +6,14 @@ const HOST = '0.0.0.0';
 const PORT = '8081';
 app = express();
 
-const counter = new Gauge({
-	name: 'wrk2_api_latency_per_minute',
-	help: 'Jaeger post API latency(ms) per minute'
+const avg_counter = new Gauge({
+	name: 'wrk2_avg_api_latency',
+	help: 'Jaeger average post API latency (ms)'
+});
+
+const max_counter = new Gauge({
+	name: 'wrk2_max_api_latency',
+	help: 'Jaeger max post API latency (ms)'
 });
 
 app.get('/metrics', async (req, res) => {
@@ -23,12 +28,15 @@ app.get('/metrics', async (req, res) => {
 		
 		let data = result.data.data;
 		let avg_duration = 0;
+		let max_duration = 0;
 		data.forEach(api => {
-			let duration = api.spans.find(span => span.references.length == 0).duration || 0;
-			avg_duration += duration / 1000;
+			let duration = (api.spans.find(span => span.references.length == 0).duration) / 1000 || 0; // milliseconds
+			avg_duration += duration;
+			max_duration = Math.max(max_duration, duration);
 		});
 		avg_duration = (avg_duration / data.length) || 0;
-		counter.set(avg_duration);
+		avg_counter.set(avg_duration);
+		max_counter.set(max_duration);
 
 	}
 	catch(error) {
@@ -36,7 +44,7 @@ app.get('/metrics', async (req, res) => {
 	}
 	finally {
 		res.set('Content-Type', register.contentType);
-		res.end(await register.getSingleMetricAsString('wrk2_api_latency_per_minute'));
+		res.end(await register.metrics());
 	}
 });
 

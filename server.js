@@ -29,12 +29,12 @@ app.get('/metrics', async (req, res) => {
 		let data = result.data.data;
 		let avg_duration = 0;
 		let max_duration = 0;
-		data.forEach(api => {
-			let duration = (api.spans.find(span => span.references.length == 0).duration) / 1000 || 0; // milliseconds
-			avg_duration += duration;
-			max_duration = Math.max(max_duration, duration);
-		});
-		avg_duration = (avg_duration / data.length) || 0;
+		let durations = data.map(api => api.spans.find(span => span.references.length == 0).duration / 1000 || 0);
+		if(durations.length > 0) {
+			avg_duration = durations.reduce( (a,b) => a+b ) / durations.length;
+			max_durations = durations.sort((a,b) => b-a).slice(0, Math.max(durations.length * 0.05, 1)); // Top 5% of durations
+			max_duration = max_durations.reduce( (a,b) => a+b ) / max_durations.length;
+		}
 		avg_counter.set(avg_duration);
 		max_counter.set(max_duration);
 

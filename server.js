@@ -21,15 +21,22 @@ app.get('/metrics', async (req, res) => {
 	let url = process.env.JAEGER_URL || "http://172.26.128.130:31111";
 	let end = Date.now() * 1000; // microseconds
 	let start = end - ( scrape_window );
-	let operation = "/wrk2-api/post/compose";
-	let service = "nginx-web-server";
+	let operation = "compose_post_server";
+	let service = "compose-post-service";
 	try {
-		const result = await axios.get(`${url}/api/traces?end=${end}&lookback=custom&operation=${operation}&service=${service}&start=${start}`)
+		const result = await axios.get(`${url}/api/traces?end=${end}&lookback=custom&operation=${operation}&service=${service}&start=${start}`);
+		//const result = await axios.get(`${url}/api/traces?end=${end}&lookback=custom&service=${service}&start=${start}`);
 		
 		let data = result.data.data;
 		let avg_duration = 0;
 		let max_duration = 0;
-		let durations = data.map(api => api.spans.find(span => span.references.length == 0).duration / 1000 || 0);
+		//let durations = data.map(api => api.spans.find(span => span.references.length == 0).duration / 1000 || 0);
+		let durations = data.map(api => {
+			let duration_span = api.spans.find(span => span.operationName === "compose_post_server");
+			let duration = duration_span.duration / 1000;
+			return duration || 0;
+		});
+		//let durations = data.map(api => api.spans.find(span => span.operationName === "compose_post_server").duration / 1000 || 0);
 		if(durations.length > 0) {
 			avg_duration = durations.reduce( (a,b) => a+b ) / durations.length;
 			max_durations = durations.sort((a,b) => b-a).slice(0, Math.max(durations.length * 0.05, 1)); // Top 5% of durations
